@@ -7,9 +7,9 @@ import java.net.Socket;
 import java.util.ArrayList;
 
 public class JServer extends Thread {
+    public ServerSocket server;
     private String host;
     private int port;
-    private ServerSocket server;
     private ArrayList<JServerConnection> jServerConnections;
 
     public JServer(String host, int port) {
@@ -29,19 +29,31 @@ public class JServer extends Thread {
     }
 
     public void closeServer() {
-
+        try {
+            this.server.close();
+            for (JServerConnection jServerConnection : this.jServerConnections) {
+                jServerConnection.setDisable();
+                this.jServerConnections.remove(jServerConnection);
+            }
+            this.interrupt();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 
     @Override
     public void run() {
-        try {
-            Socket socket = this.server.accept();
-            socket.setTcpNoDelay(true);
-            JServerConnection jServerConnection = new JServerConnection(socket, this);
-            this.jServerConnections.add(jServerConnection);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        do {
+            try {
+                Socket socket = this.server.accept();
+                socket.setTcpNoDelay(true);
+                JServerConnection jServerConnection = new JServerConnection(socket, this);
+                jServerConnection.setEnable();
+                this.jServerConnections.add(jServerConnection);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } while (!this.server.isClosed());
     }
 }
