@@ -8,28 +8,35 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class TestjSocket {
+    public static TestjSocket testjSocket;
+    public JServer jServer;
+    public JClientConnection jClientConnection1;
 
     public TestjSocket(String[] args) {
-        if (args[0].equalsIgnoreCase("server")) {
-            this.server();
-        } else {
-            this.client();
-        }
-
+        this.server();
+        this.client();
     }
 
     public static void main(String[] input) {
-        new TestjSocket(input);
+        testjSocket = new TestjSocket(input);
     }
 
     private void client() {
-        JClientConnection jClientConnection1 = new JClientConnection("localhost", 9090);
+        jClientConnection1 = new JClientConnection("localhost", 9090);
+        jClientConnection1.registerDataInputListener(new TestEventDataClient());
         jClientConnection1.setEnable();
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         DataOutputStream outputStream = new DataOutputStream(byteArrayOutputStream);
         try {
-            outputStream.writeUTF("Client 1");
+            outputStream.writeUTF("test_socket_connection");
+            outputStream.writeUTF("GRE4gterfe23fw3g54EBFilzujasdEWR");
+            outputStream.writeInt(51112);
         } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
@@ -37,7 +44,8 @@ public class TestjSocket {
     }
 
     private void server() {
-        JServer jServer = new JServer("localhost", 9090);
+        jServer = new JServer("localhost", 9090);
+        jServer.registerDataInputListener(new TestEventDataServer());
         jServer.openServer();
     }
 }

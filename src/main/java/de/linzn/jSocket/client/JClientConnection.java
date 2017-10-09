@@ -1,31 +1,42 @@
 package de.linzn.jSocket.client;
 
+import de.linzn.jSocket.core.DataInputListener;
+import de.linzn.jSocket.core.SocketConnectionListener;
+import de.linzn.jSocket.core.TaskRunnable;
+
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
+import java.util.UUID;
 
 public class JClientConnection implements Runnable {
     private String host;
     private int port;
     private Socket socket;
     private boolean keepAlive;
+    private UUID uuid;
+    private ArrayList<DataInputListener> dataInputListener;
+    private ArrayList<SocketConnectionListener> socketConnectListener;
+    private ArrayList<SocketConnectionListener> socketDisconnectListener;
 
     public JClientConnection(String host, int port) {
         this.host = host;
         this.port = port;
         this.keepAlive = true;
+        this.socket = new Socket();
+        this.dataInputListener = new ArrayList<>();
+        this.socketConnectListener = new ArrayList<>();
+        this.socketDisconnectListener = new ArrayList<>();
+        this.uuid = new UUID(0L, 0L);
         System.out.println("Create JClientConnection");
     }
 
     public void setEnable() {
         this.keepAlive = true;
-        new ThreadPoolExecutor(1, 1, 250L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>())
-                .submit(this);
+        new TaskRunnable().runSingleThreadExecutor(this);
     }
 
     public void setDisable() {
@@ -39,6 +50,7 @@ public class JClientConnection implements Runnable {
             try {
                 this.socket = new Socket(this.host, this.port);
                 this.socket.setTcpNoDelay(true);
+                this.onConnect();
 
                 while (this.isValidConnection()) {
                     this.readInput();
@@ -60,10 +72,9 @@ public class JClientConnection implements Runnable {
         if (channel == null || channel.isEmpty()) {
             return false;
         } else {
-            System.out.println("C: " + channel);
             byte[] bytes = new byte[inputStream.available()];
             inputStream.readFully(bytes);
-            //Data
+            this.onDataInput(channel, bytes);
             return true;
         }
     }
@@ -88,7 +99,44 @@ public class JClientConnection implements Runnable {
                 this.socket.close();
             } catch (IOException e) {
             }
+            this.onDisconnect();
         }
     }
+
+    private void onConnect() {
+        System.out.println("Connected to Socket");
+        for (SocketConnectionListener socketConnectionListener : this.socketConnectListener) {
+            socketConnectionListener.onEvent(this.uuid);
+        }
+    }
+
+    private void onDisconnect() {
+        System.out.println("Disconnected from Socket");
+        for (SocketConnectionListener socketConnectionListener : this.socketDisconnectListener) {
+            socketConnectionListener.onEvent(this.uuid);
+        }
+    }
+
+    private void onDataInput(String channel, byte[] bytes) {
+        System.out.println("Datainput from Socket");
+        for (DataInputListener dataInputEvent : this.dataInputListener) {
+            if (dataInputEvent.channel().equalsIgnoreCase(channel)) {
+                dataInputEvent.onEvent(this.uuid, bytes);
+            }
+        }
+    }
+
+    public void registerDataInputListener(DataInputListener dataInputListener) {
+        this.dataInputListener.add(dataInputListener);
+    }
+
+    public void registerSocketConnectListener(SocketConnectionListener socketConnectionListener) {
+        this.socketConnectListener.add(socketConnectionListener);
+    }
+
+    public void registerSocketDisconnectListener(SocketConnectionListener socketConnectionListener) {
+        this.socketDisconnectListener.add(socketConnectionListener);
+    }
+
 
 }

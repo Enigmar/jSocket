@@ -1,27 +1,30 @@
 package de.linzn.jSocket.server;
 
+import de.linzn.jSocket.core.DataInputListener;
+import de.linzn.jSocket.core.SocketConnectionListener;
+import de.linzn.jSocket.core.TaskRunnable;
+
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.UUID;
 
 public class JServerConnection implements Runnable {
     private Socket socket;
     private JServer jServer;
+    private UUID uuid;
 
     public JServerConnection(Socket socket, JServer jServer) {
         this.socket = socket;
         this.jServer = jServer;
+        this.uuid = UUID.randomUUID();
         System.out.println("Create JServerConnection");
     }
 
     public void setEnable() {
-        new ThreadPoolExecutor(1, 1, 250L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>())
-                .submit(this);
+        new TaskRunnable().runSingleThreadExecutor(this);
     }
 
     public void setDisable() {
@@ -30,6 +33,7 @@ public class JServerConnection implements Runnable {
 
     @Override
     public void run() {
+        this.onConnect();
         try {
             while (!this.jServer.server.isClosed() && this.isValidConnection()) {
                 this.readInput();
@@ -49,10 +53,9 @@ public class JServerConnection implements Runnable {
         if (channel == null || channel.isEmpty()) {
             return false;
         } else {
-            System.out.println("C: " + channel);
             byte[] bytes = new byte[inputStream.available()];
             inputStream.readFully(bytes);
-            //Data
+            this.onDataInput(channel, bytes);
             return true;
         }
 
@@ -78,8 +81,35 @@ public class JServerConnection implements Runnable {
                 this.socket.close();
             } catch (IOException e) {
             }
-
+            this.onDisconnect();
         }
+    }
+
+    private void onConnect() {
+        System.out.println("Connected to Socket");
+        for (SocketConnectionListener socketConnectionListener : this.jServer.socketConnectListener) {
+            socketConnectionListener.onEvent(this.uuid);
+        }
+    }
+
+    private void onDisconnect() {
+        System.out.println("Disconnected from Socket");
+        for (SocketConnectionListener socketConnectionListener : this.jServer.socketDisconnectListener) {
+            socketConnectionListener.onEvent(this.uuid);
+        }
+    }
+
+    private void onDataInput(String channel, byte[] bytes) {
+        System.out.println("Datainput from Socket");
+        for (DataInputListener dataInputEvent : this.jServer.dataInputListener) {
+            if (dataInputEvent.channel().equalsIgnoreCase(channel)) {
+                dataInputEvent.onEvent(this.uuid, bytes);
+            }
+        }
+    }
+
+    public UUID getUUID() {
+        return this.uuid;
     }
 
 }
