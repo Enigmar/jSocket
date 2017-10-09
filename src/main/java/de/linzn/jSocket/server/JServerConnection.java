@@ -9,7 +9,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-
 public class JServerConnection implements Runnable {
     private Socket socket;
     private JServer jServer;
@@ -33,14 +32,11 @@ public class JServerConnection implements Runnable {
     public void run() {
         try {
             while (!this.jServer.server.isClosed() && this.isValidConnection()) {
-                    /* Read remote stream!*/
-                readInput();
+                this.readInput();
             }
-
         } catch (IOException e2) {
             this.closeConnection();
         }
-
     }
 
     public boolean isValidConnection() {
@@ -62,7 +58,6 @@ public class JServerConnection implements Runnable {
 
     }
 
-
     public void writeOutput(ByteArrayOutputStream bytes) {
         if (this.isValidConnection()) {
             try {
@@ -72,6 +67,8 @@ public class JServerConnection implements Runnable {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        } else {
+            System.out.println("The JConnection is closed. No output possible!");
         }
     }
 

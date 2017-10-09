@@ -40,15 +40,13 @@ public class JClientConnection implements Runnable {
                 this.socket = new Socket(this.host, this.port);
                 this.socket.setTcpNoDelay(true);
 
-                while (isValidConnection()) {
-                    readInput();
+                while (this.isValidConnection()) {
+                    this.readInput();
                 }
             } catch (IOException e2) {
                 this.closeConnection();
             }
-
         }
-
     }
 
 
@@ -79,6 +77,8 @@ public class JClientConnection implements Runnable {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        } else {
+            System.out.println("The JConnection is closed. No output possible!");
         }
     }
 
