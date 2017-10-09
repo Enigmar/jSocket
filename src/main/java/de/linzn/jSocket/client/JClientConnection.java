@@ -105,25 +105,31 @@ public class JClientConnection implements Runnable {
 
     private void onConnect() {
         System.out.println("Connected to Socket");
-        for (SocketConnectionListener socketConnectionListener : this.socketConnectListener) {
-            socketConnectionListener.onEvent(this.uuid);
-        }
+        new TaskRunnable().runSingleThreadExecutor(() -> {
+            for (SocketConnectionListener socketConnectionListener : this.socketConnectListener) {
+                socketConnectionListener.onEvent(this.uuid);
+            }
+        });
     }
 
     private void onDisconnect() {
         System.out.println("Disconnected from Socket");
-        for (SocketConnectionListener socketConnectionListener : this.socketDisconnectListener) {
-            socketConnectionListener.onEvent(this.uuid);
-        }
+        new TaskRunnable().runSingleThreadExecutor(() -> {
+            for (SocketConnectionListener socketConnectionListener : this.socketDisconnectListener) {
+                socketConnectionListener.onEvent(this.uuid);
+            }
+        });
     }
 
     private void onDataInput(String channel, byte[] bytes) {
         System.out.println("Datainput from Socket");
-        for (DataInputListener dataInputEvent : this.dataInputListener) {
-            if (dataInputEvent.channel().equalsIgnoreCase(channel)) {
-                dataInputEvent.onEvent(this.uuid, bytes);
+        new TaskRunnable().runSingleThreadExecutor(() -> {
+            for (DataInputListener dataInputEvent : this.dataInputListener) {
+                if (dataInputEvent.channel().equalsIgnoreCase(channel)) {
+                    dataInputEvent.onEvent(this.uuid, bytes);
+                }
             }
-        }
+        });
     }
 
     public void registerDataInputListener(DataInputListener dataInputListener) {
