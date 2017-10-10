@@ -1,18 +1,14 @@
 package de.linzn.jSocket.test;
 
-import de.linzn.jSocket.core.DataInputListener;
+import de.linzn.jSocket.core.IncomingDataListener;
 
 import java.io.*;
 import java.util.UUID;
 
-public class TestEventDataServer implements DataInputListener {
-    @Override
-    public String channel() {
-        return "test_socket_connection";
-    }
+public class TestEventDataServer implements IncomingDataListener {
 
     @Override
-    public void onEvent(UUID uuid, byte[] bytes) {
+    public void onEvent(String channel, UUID uuid, byte[] bytes) {
         DataInputStream dataInputStream = new DataInputStream(new ByteArrayInputStream(bytes));
         try {
             String secretPW = dataInputStream.readUTF();

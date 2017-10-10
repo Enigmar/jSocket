@@ -1,7 +1,8 @@
 package de.linzn.jSocket.client;
 
-import de.linzn.jSocket.core.DataInputListener;
-import de.linzn.jSocket.core.SocketConnectionListener;
+import de.linzn.jSocket.core.ChannelDataEventPacket;
+import de.linzn.jSocket.core.ConnectionListener;
+import de.linzn.jSocket.core.IncomingDataListener;
 import de.linzn.jSocket.core.TaskRunnable;
 
 import java.io.*;
@@ -15,9 +16,9 @@ public class JClientConnection implements Runnable {
     private Socket socket;
     private boolean keepAlive;
     private UUID uuid;
-    private ArrayList<DataInputListener> dataInputListener;
-    private ArrayList<SocketConnectionListener> socketConnectListener;
-    private ArrayList<SocketConnectionListener> socketDisconnectListener;
+    private ArrayList<ChannelDataEventPacket> dataInputListener;
+    private ArrayList<ConnectionListener> socketConnectListener;
+    private ArrayList<ConnectionListener> socketDisconnectListener;
 
     public JClientConnection(String host, int port) {
         this.host = host;
@@ -123,7 +124,7 @@ public class JClientConnection implements Runnable {
     private void onConnect() {
         System.out.println("Connected to Socket");
         new TaskRunnable().runSingleThreadExecutor(() -> {
-            for (SocketConnectionListener socketConnectionListener : this.socketConnectListener) {
+            for (ConnectionListener socketConnectionListener : this.socketConnectListener) {
                 socketConnectionListener.onEvent(this.uuid);
             }
         });
@@ -132,32 +133,32 @@ public class JClientConnection implements Runnable {
     private void onDisconnect() {
         System.out.println("Disconnected from Socket");
         new TaskRunnable().runSingleThreadExecutor(() -> {
-            for (SocketConnectionListener socketConnectionListener : this.socketDisconnectListener) {
+            for (ConnectionListener socketConnectionListener : this.socketDisconnectListener) {
                 socketConnectionListener.onEvent(this.uuid);
             }
         });
     }
 
     private void onDataInput(String channel, byte[] bytes) {
-        System.out.println("Datainput from Socket");
+        System.out.println("IncomingData from Socket");
         new TaskRunnable().runSingleThreadExecutor(() -> {
-            for (DataInputListener dataInputEvent : this.dataInputListener) {
-                if (dataInputEvent.channel().equalsIgnoreCase(channel)) {
-                    dataInputEvent.onEvent(this.uuid, bytes);
+            for (ChannelDataEventPacket dataInputListenerObject : this.dataInputListener) {
+                if (dataInputListenerObject.channel.equalsIgnoreCase(channel)) {
+                    dataInputListenerObject.incomingDataListener.onEvent(channel, this.uuid, bytes);
                 }
             }
         });
     }
 
-    public void registerDataInputListener(DataInputListener dataInputListener) {
-        this.dataInputListener.add(dataInputListener);
+    public void registerDataInputListener(String channel, IncomingDataListener dataInputListener) {
+        this.dataInputListener.add(new ChannelDataEventPacket(channel, dataInputListener));
     }
 
-    public void registerSocketConnectListener(SocketConnectionListener socketConnectionListener) {
+    public void registerSocketConnectListener(ConnectionListener socketConnectionListener) {
         this.socketConnectListener.add(socketConnectionListener);
     }
 
-    public void registerSocketDisconnectListener(SocketConnectionListener socketConnectionListener) {
+    public void registerSocketDisconnectListener(ConnectionListener socketConnectionListener) {
         this.socketDisconnectListener.add(socketConnectionListener);
     }
 

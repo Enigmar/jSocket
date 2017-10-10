@@ -23,7 +23,7 @@ public class TestjSocket {
 
     private void client() {
         jClientConnection1 = new JClientConnection("localhost", 9090);
-        jClientConnection1.registerDataInputListener(new TestEventDataClient());
+        jClientConnection1.registerDataInputListener("test_socket_connection", new TestEventDataClient());
         jClientConnection1.setEnable();
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         DataOutputStream outputStream = new DataOutputStream(byteArrayOutputStream);
@@ -44,7 +44,7 @@ public class TestjSocket {
 
     private void server() {
         jServer = new JServer("localhost", 9090);
-        jServer.registerDataInputListener(new TestEventDataServer());
+        jServer.registerDataInputListener("test_socket_connection", new TestEventDataServer());
         jServer.openServer();
     }
 }

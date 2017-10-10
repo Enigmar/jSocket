@@ -1,7 +1,7 @@
 package de.linzn.jSocket.server;
 
-import de.linzn.jSocket.core.DataInputListener;
-import de.linzn.jSocket.core.SocketConnectionListener;
+import de.linzn.jSocket.core.ChannelDataEventPacket;
+import de.linzn.jSocket.core.ConnectionListener;
 import de.linzn.jSocket.core.TaskRunnable;
 
 import java.io.*;
@@ -104,7 +104,7 @@ public class JServerConnection implements Runnable {
     private void onConnect() {
         System.out.println("Connected to Socket");
         new TaskRunnable().runSingleThreadExecutor(() -> {
-            for (SocketConnectionListener socketConnectionListener : jServer.socketConnectListener) {
+            for (ConnectionListener socketConnectionListener : jServer.socketConnectListener) {
                 socketConnectionListener.onEvent(uuid);
             }
         });
@@ -113,18 +113,18 @@ public class JServerConnection implements Runnable {
     private void onDisconnect() {
         System.out.println("Disconnected from Socket");
         new TaskRunnable().runSingleThreadExecutor(() -> {
-            for (SocketConnectionListener socketConnectionListener : this.jServer.socketDisconnectListener) {
+            for (ConnectionListener socketConnectionListener : this.jServer.socketDisconnectListener) {
                 socketConnectionListener.onEvent(this.uuid);
             }
         });
     }
 
     private void onDataInput(String channel, byte[] bytes) {
-        System.out.println("Datainput from Socket");
+        System.out.println("IncomingData from Socket");
         new TaskRunnable().runSingleThreadExecutor(() -> {
-            for (DataInputListener dataInputEvent : this.jServer.dataInputListener) {
-                if (dataInputEvent.channel().equalsIgnoreCase(channel)) {
-                    dataInputEvent.onEvent(this.uuid, bytes);
+            for (ChannelDataEventPacket dataInputListenerObject : this.jServer.dataInputListener) {
+                if (dataInputListenerObject.channel.equalsIgnoreCase(channel)) {
+                    dataInputListenerObject.incomingDataListener.onEvent(channel, this.uuid, bytes);
                 }
             }
         });

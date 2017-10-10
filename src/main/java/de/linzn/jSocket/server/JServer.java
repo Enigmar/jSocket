@@ -1,7 +1,8 @@
 package de.linzn.jSocket.server;
 
-import de.linzn.jSocket.core.DataInputListener;
-import de.linzn.jSocket.core.SocketConnectionListener;
+import de.linzn.jSocket.core.ChannelDataEventPacket;
+import de.linzn.jSocket.core.ConnectionListener;
+import de.linzn.jSocket.core.IncomingDataListener;
 import de.linzn.jSocket.core.TaskRunnable;
 
 import java.io.IOException;
@@ -14,9 +15,9 @@ import java.util.UUID;
 
 public class JServer implements Runnable {
     public ServerSocket server;
-    ArrayList<DataInputListener> dataInputListener;
-    ArrayList<SocketConnectionListener> socketConnectListener;
-    ArrayList<SocketConnectionListener> socketDisconnectListener;
+    ArrayList<ChannelDataEventPacket> dataInputListener;
+    ArrayList<ConnectionListener> socketConnectListener;
+    ArrayList<ConnectionListener> socketDisconnectListener;
     private String host;
     private int port;
     private HashMap<UUID, JServerConnection> jServerConnections;
@@ -68,15 +69,15 @@ public class JServer implements Runnable {
         } while (!this.server.isClosed());
     }
 
-    public void registerDataInputListener(DataInputListener dataInputListener) {
-        this.dataInputListener.add(dataInputListener);
+    public void registerDataInputListener(String channel, IncomingDataListener dataInputListener) {
+        this.dataInputListener.add(new ChannelDataEventPacket(channel, dataInputListener));
     }
 
-    public void registerSocketConnectListener(SocketConnectionListener socketConnectionListener) {
+    public void registerSocketConnectListener(ConnectionListener socketConnectionListener) {
         this.socketConnectListener.add(socketConnectionListener);
     }
 
-    public void registerSocketDisconnectListener(SocketConnectionListener socketConnectionListener) {
+    public void registerSocketDisconnectListener(ConnectionListener socketConnectionListener) {
         this.socketDisconnectListener.add(socketConnectionListener);
     }
 
