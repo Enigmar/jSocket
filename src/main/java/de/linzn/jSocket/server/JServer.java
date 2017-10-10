@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
 
-public class JServer extends Thread {
+public class JServer implements Runnable {
     public ServerSocket server;
     ArrayList<DataInputListener> dataInputListener;
     ArrayList<SocketConnectionListener> socketConnectListener;
@@ -28,14 +28,13 @@ public class JServer extends Thread {
         this.dataInputListener = new ArrayList<>();
         this.socketConnectListener = new ArrayList<>();
         this.socketDisconnectListener = new ArrayList<>();
-        this.setName("jServer");
     }
 
     public void openServer() {
         try {
             this.server = new ServerSocket();
             this.server.bind(new InetSocketAddress(this.host, this.port));
-            new TaskRunnable().runThreadExecutor(this);
+            new TaskRunnable().runSingleThreadExecutor(this);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -48,7 +47,6 @@ public class JServer extends Thread {
                 this.jServerConnections.get(uuid).setDisable();
                 this.jServerConnections.remove(uuid);
             }
-            this.interrupt();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -56,6 +54,7 @@ public class JServer extends Thread {
 
     @Override
     public void run() {
+        Thread.currentThread().setName("jServer");
         do {
             try {
                 Socket socket = this.server.accept();

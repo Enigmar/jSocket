@@ -4,10 +4,7 @@ import de.linzn.jSocket.core.DataInputListener;
 import de.linzn.jSocket.core.SocketConnectionListener;
 import de.linzn.jSocket.core.TaskRunnable;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.UUID;
@@ -34,12 +31,12 @@ public class JClientConnection implements Runnable {
         System.out.println("Create JClientConnection");
     }
 
-    public void setEnable() {
+    public synchronized void setEnable() {
         this.keepAlive = true;
         new TaskRunnable().runSingleThreadExecutor(this);
     }
 
-    public void setDisable() {
+    public synchronized void setDisable() {
         this.keepAlive = false;
         this.closeConnection();
     }
@@ -67,24 +64,44 @@ public class JClientConnection implements Runnable {
     }
 
     public boolean readInput() throws IOException {
-        DataInputStream inputStream = new DataInputStream(this.socket.getInputStream());
-        String channel = inputStream.readUTF();
-        if (channel == null || channel.isEmpty()) {
+        BufferedInputStream bInStream = new BufferedInputStream(this.socket.getInputStream());
+        DataInputStream dataInput = new DataInputStream(bInStream);
+
+        String headerChannel = dataInput.readUTF();
+        int dataSize = dataInput.readInt();
+        byte[] fullData = new byte[dataSize];
+
+        for (int i = 0; i < dataSize; i++) {
+            fullData[i] = dataInput.readByte();
+        }
+
+    /* Default input read*/
+        if (headerChannel == null || headerChannel.isEmpty()) {
+            System.out.println("No channel in header");
             return false;
         } else {
-            byte[] bytes = new byte[inputStream.available()];
-            inputStream.readFully(bytes);
-            this.onDataInput(channel, bytes);
+            System.out.println("Data amount: " + fullData.length);
+            this.onDataInput(headerChannel, fullData);
             return true;
         }
     }
 
-    public void writeOutput(ByteArrayOutputStream bytes) {
+    public synchronized void writeOutput(String headerChannel, byte[] bytes) {
         if (this.isValidConnection()) {
             try {
-                OutputStream out = this.socket.getOutputStream();
-                out.write(bytes.toByteArray());
-                out.flush();
+                byte[] fullData = bytes;
+                int dataSize = fullData.length;
+                BufferedOutputStream bOutSream = new BufferedOutputStream(this.socket.getOutputStream());
+                DataOutputStream dataOut = new DataOutputStream(bOutSream);
+
+                dataOut.writeUTF(headerChannel);
+                dataOut.writeInt(dataSize);
+
+                for (int i = 0; i < dataSize; i++) {
+                    dataOut.writeByte(fullData[i]);
+                }
+                bOutSream.flush();
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -93,7 +110,7 @@ public class JClientConnection implements Runnable {
         }
     }
 
-    public void closeConnection() {
+    public synchronized void closeConnection() {
         if (!this.socket.isClosed() && this.socket.getRemoteSocketAddress() != null) {
             try {
                 this.socket.close();

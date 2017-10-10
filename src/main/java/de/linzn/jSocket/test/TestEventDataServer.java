@@ -21,10 +21,9 @@ public class TestEventDataServer implements DataInputListener {
 
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             DataOutputStream dataOutputStream = new DataOutputStream(byteArrayOutputStream);
-            dataOutputStream.writeUTF("test_socket_connection");
             dataOutputStream.writeUTF(secretPW);
             dataOutputStream.writeInt(secretInt);
-            TestjSocket.testjSocket.jServer.getClient(uuid).writeOutput(byteArrayOutputStream);
+            TestjSocket.testjSocket.jServer.getClient(uuid).writeOutput("test_socket_connection", byteArrayOutputStream.toByteArray());
 
         } catch (IOException e) {
             e.printStackTrace();

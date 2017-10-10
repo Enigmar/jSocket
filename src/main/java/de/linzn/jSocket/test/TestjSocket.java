@@ -28,7 +28,6 @@ public class TestjSocket {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         DataOutputStream outputStream = new DataOutputStream(byteArrayOutputStream);
         try {
-            outputStream.writeUTF("test_socket_connection");
             outputStream.writeUTF("GRE4gterfe23fw3g54EBFilzujasdEWR");
             outputStream.writeInt(51112);
         } catch (IOException e) {
@@ -40,7 +39,7 @@ public class TestjSocket {
             e.printStackTrace();
         }
 
-        jClientConnection1.writeOutput(byteArrayOutputStream);
+        jClientConnection1.writeOutput("test_socket_connection", byteArrayOutputStream.toByteArray());
     }
 
     private void server() {
