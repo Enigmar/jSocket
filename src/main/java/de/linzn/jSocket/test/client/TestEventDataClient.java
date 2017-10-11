@@ -1,4 +1,4 @@
-package de.linzn.jSocket.test;
+package de.linzn.jSocket.test.client;
 
 import de.linzn.jSocket.core.IncomingDataListener;
 

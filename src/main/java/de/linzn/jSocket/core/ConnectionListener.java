@@ -4,5 +4,7 @@ import java.util.UUID;
 
 public interface ConnectionListener {
 
-    void onEvent(UUID clientUUID);
+    void onConnectEvent(UUID clientUUID);
+
+    void onDisconnectEvent(UUID clientUUID);
 }

@@ -2,6 +2,10 @@ package de.linzn.jSocket.test;
 
 import de.linzn.jSocket.client.JClientConnection;
 import de.linzn.jSocket.server.JServer;
+import de.linzn.jSocket.test.client.TestEventConnectionClient;
+import de.linzn.jSocket.test.client.TestEventDataClient;
+import de.linzn.jSocket.test.server.TestEventConnectionServer;
+import de.linzn.jSocket.test.server.TestEventDataServer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -23,7 +27,8 @@ public class TestjSocket {
 
     private void client() {
         jClientConnection1 = new JClientConnection("localhost", 9090);
-        jClientConnection1.registerDataInputListener("test_socket_connection", new TestEventDataClient());
+        jClientConnection1.registerIncomingDataListener("test_socket_connection", new TestEventDataClient());
+        jClientConnection1.registerConnectionListener(new TestEventConnectionClient());
         jClientConnection1.setEnable();
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         DataOutputStream outputStream = new DataOutputStream(byteArrayOutputStream);
@@ -44,7 +49,8 @@ public class TestjSocket {
 
     private void server() {
         jServer = new JServer("localhost", 9090);
-        jServer.registerDataInputListener("test_socket_connection", new TestEventDataServer());
+        jServer.registerIncomingDataListener("test_socket_connection", new TestEventDataServer());
+        jServer.registerConnectionListener(new TestEventConnectionServer());
         jServer.openServer();
     }
 }

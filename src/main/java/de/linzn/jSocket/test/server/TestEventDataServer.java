@@ -1,6 +1,7 @@
-package de.linzn.jSocket.test;
+package de.linzn.jSocket.test.server;
 
 import de.linzn.jSocket.core.IncomingDataListener;
+import de.linzn.jSocket.test.TestjSocket;
 
 import java.io.*;
 import java.util.UUID;

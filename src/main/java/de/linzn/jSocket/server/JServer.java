@@ -16,8 +16,7 @@ import java.util.UUID;
 public class JServer implements Runnable {
     public ServerSocket server;
     ArrayList<ChannelDataEventPacket> dataInputListener;
-    ArrayList<ConnectionListener> socketConnectListener;
-    ArrayList<ConnectionListener> socketDisconnectListener;
+    ArrayList<ConnectionListener> connectionListeners;
     private String host;
     private int port;
     private HashMap<UUID, JServerConnection> jServerConnections;
@@ -27,8 +26,8 @@ public class JServer implements Runnable {
         this.port = port;
         this.jServerConnections = new HashMap<>();
         this.dataInputListener = new ArrayList<>();
-        this.socketConnectListener = new ArrayList<>();
-        this.socketDisconnectListener = new ArrayList<>();
+        this.connectionListeners = new ArrayList<>();
+        System.out.println("[" + Thread.currentThread().getName() + "] " + "Create JServer");
     }
 
     public void openServer() {
@@ -69,16 +68,12 @@ public class JServer implements Runnable {
         } while (!this.server.isClosed());
     }
 
-    public void registerDataInputListener(String channel, IncomingDataListener dataInputListener) {
+    public void registerIncomingDataListener(String channel, IncomingDataListener dataInputListener) {
         this.dataInputListener.add(new ChannelDataEventPacket(channel, dataInputListener));
     }
 
-    public void registerSocketConnectListener(ConnectionListener socketConnectionListener) {
-        this.socketConnectListener.add(socketConnectionListener);
-    }
-
-    public void registerSocketDisconnectListener(ConnectionListener socketConnectionListener) {
-        this.socketDisconnectListener.add(socketConnectionListener);
+    public void registerConnectionListener(ConnectionListener connectionListener) {
+        this.connectionListeners.add(connectionListener);
     }
 
     public JServerConnection getClient(UUID uuid) {

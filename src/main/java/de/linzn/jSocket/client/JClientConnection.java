@@ -16,20 +16,18 @@ public class JClientConnection implements Runnable {
     private Socket socket;
     private boolean keepAlive;
     private UUID uuid;
-    private ArrayList<ChannelDataEventPacket> dataInputListener;
-    private ArrayList<ConnectionListener> socketConnectListener;
-    private ArrayList<ConnectionListener> socketDisconnectListener;
+    private ArrayList<ChannelDataEventPacket> dataInputListeners;
+    private ArrayList<ConnectionListener> connectionListeners;
 
     public JClientConnection(String host, int port) {
         this.host = host;
         this.port = port;
         this.keepAlive = true;
         this.socket = new Socket();
-        this.dataInputListener = new ArrayList<>();
-        this.socketConnectListener = new ArrayList<>();
-        this.socketDisconnectListener = new ArrayList<>();
+        this.dataInputListeners = new ArrayList<>();
+        this.connectionListeners = new ArrayList<>();
         this.uuid = new UUID(0L, 0L);
-        System.out.println("Create JClientConnection");
+        System.out.println("[" + Thread.currentThread().getName() + "] " + "Create JClientConnection");
     }
 
     public synchronized void setEnable() {
@@ -78,10 +76,10 @@ public class JClientConnection implements Runnable {
 
     /* Default input read*/
         if (headerChannel == null || headerChannel.isEmpty()) {
-            System.out.println("No channel in header");
+            System.out.println("[" + Thread.currentThread().getName() + "] " + "No channel in header");
             return false;
         } else {
-            System.out.println("Data amount: " + fullData.length);
+            System.out.println("[" + Thread.currentThread().getName() + "] " + "Data amount: " + fullData.length);
             this.onDataInput(headerChannel, fullData);
             return true;
         }
@@ -107,7 +105,7 @@ public class JClientConnection implements Runnable {
                 e.printStackTrace();
             }
         } else {
-            System.out.println("The JConnection is closed. No output possible!");
+            System.out.println("[" + Thread.currentThread().getName() + "] " + "The JConnection is closed. No output possible!");
         }
     }
 
@@ -122,27 +120,27 @@ public class JClientConnection implements Runnable {
     }
 
     private void onConnect() {
-        System.out.println("Connected to Socket");
+        System.out.println("[" + Thread.currentThread().getName() + "] " + "Connected to Socket");
         new TaskRunnable().runSingleThreadExecutor(() -> {
-            for (ConnectionListener socketConnectionListener : this.socketConnectListener) {
-                socketConnectionListener.onEvent(this.uuid);
+            for (ConnectionListener socketConnectionListener : this.connectionListeners) {
+                socketConnectionListener.onConnectEvent(this.uuid);
             }
         });
     }
 
     private void onDisconnect() {
-        System.out.println("Disconnected from Socket");
+        System.out.println("[" + Thread.currentThread().getName() + "] " + "Disconnected from Socket");
         new TaskRunnable().runSingleThreadExecutor(() -> {
-            for (ConnectionListener socketConnectionListener : this.socketDisconnectListener) {
-                socketConnectionListener.onEvent(this.uuid);
+            for (ConnectionListener socketConnectionListener : this.connectionListeners) {
+                socketConnectionListener.onDisconnectEvent(this.uuid);
             }
         });
     }
 
     private void onDataInput(String channel, byte[] bytes) {
-        System.out.println("IncomingData from Socket");
+        System.out.println("[" + Thread.currentThread().getName() + "] " + "IncomingData from Socket");
         new TaskRunnable().runSingleThreadExecutor(() -> {
-            for (ChannelDataEventPacket dataInputListenerObject : this.dataInputListener) {
+            for (ChannelDataEventPacket dataInputListenerObject : this.dataInputListeners) {
                 if (dataInputListenerObject.channel.equalsIgnoreCase(channel)) {
                     dataInputListenerObject.incomingDataListener.onEvent(channel, this.uuid, bytes);
                 }
@@ -150,17 +148,12 @@ public class JClientConnection implements Runnable {
         });
     }
 
-    public void registerDataInputListener(String channel, IncomingDataListener dataInputListener) {
-        this.dataInputListener.add(new ChannelDataEventPacket(channel, dataInputListener));
+    public void registerIncomingDataListener(String channel, IncomingDataListener dataInputListener) {
+        this.dataInputListeners.add(new ChannelDataEventPacket(channel, dataInputListener));
     }
 
-    public void registerSocketConnectListener(ConnectionListener socketConnectionListener) {
-        this.socketConnectListener.add(socketConnectionListener);
+    public void registerConnectionListener(ConnectionListener connectionListener) {
+        this.connectionListeners.add(connectionListener);
     }
-
-    public void registerSocketDisconnectListener(ConnectionListener socketConnectionListener) {
-        this.socketDisconnectListener.add(socketConnectionListener);
-    }
-
 
 }

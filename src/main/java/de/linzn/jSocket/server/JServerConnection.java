@@ -17,7 +17,7 @@ public class JServerConnection implements Runnable {
         this.socket = socket;
         this.jServer = jServer;
         this.uuid = UUID.randomUUID();
-        System.out.println("Create JServerConnection");
+        System.out.println("[" + Thread.currentThread().getName() + "] " + "Create JServerConnection");
     }
 
     public synchronized void setEnable() {
@@ -58,10 +58,10 @@ public class JServerConnection implements Runnable {
 
     /* Default input read*/
         if (headerChannel == null || headerChannel.isEmpty()) {
-            System.out.println("No channel in header");
+            System.out.println("[" + Thread.currentThread().getName() + "] " + "No channel in header");
             return false;
         } else {
-            System.out.println("Data amount: " + fullData.length);
+            System.out.println("[" + Thread.currentThread().getName() + "] " + "Data amount: " + fullData.length);
             this.onDataInput(headerChannel, fullData);
             return true;
         }
@@ -87,7 +87,7 @@ public class JServerConnection implements Runnable {
                 e.printStackTrace();
             }
         } else {
-            System.out.println("The JConnection is closed. No output possible!");
+            System.out.println("[" + Thread.currentThread().getName() + "] " + "The JConnection is closed. No output possible!");
         }
     }
 
@@ -102,25 +102,25 @@ public class JServerConnection implements Runnable {
     }
 
     private void onConnect() {
-        System.out.println("Connected to Socket");
+        System.out.println("[" + Thread.currentThread().getName() + "] " + "Connected to Socket");
         new TaskRunnable().runSingleThreadExecutor(() -> {
-            for (ConnectionListener socketConnectionListener : jServer.socketConnectListener) {
-                socketConnectionListener.onEvent(uuid);
+            for (ConnectionListener socketConnectionListener : this.jServer.connectionListeners) {
+                socketConnectionListener.onConnectEvent(this.uuid);
             }
         });
     }
 
     private void onDisconnect() {
-        System.out.println("Disconnected from Socket");
+        System.out.println("[" + Thread.currentThread().getName() + "] " + "Disconnected from Socket");
         new TaskRunnable().runSingleThreadExecutor(() -> {
-            for (ConnectionListener socketConnectionListener : this.jServer.socketDisconnectListener) {
-                socketConnectionListener.onEvent(this.uuid);
+            for (ConnectionListener socketConnectionListener : this.jServer.connectionListeners) {
+                socketConnectionListener.onDisconnectEvent(this.uuid);
             }
         });
     }
 
     private void onDataInput(String channel, byte[] bytes) {
-        System.out.println("IncomingData from Socket");
+        System.out.println("[" + Thread.currentThread().getName() + "] " + "IncomingData from Socket");
         new TaskRunnable().runSingleThreadExecutor(() -> {
             for (ChannelDataEventPacket dataInputListenerObject : this.jServer.dataInputListener) {
                 if (dataInputListenerObject.channel.equalsIgnoreCase(channel)) {
